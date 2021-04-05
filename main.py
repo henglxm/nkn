@@ -30,31 +30,40 @@ def main():
         get_ip(access=access, secret=secret, region=region)
         return False
     if param and param == 'init':
-        # instane_type = os.getenv('INIT_TYPE')
-        # ami = os.getenv('INIT_AMI')
-        # nkn_path = os.getenv('AMD_NKN_PATH')
-        apikey = {
-            'AKIAWYBUD74JRHJEAPNM': 'SNxGLbnlbevPgLtuPq/qIOZJlaos8w9Qz+IxVofq',
-            'AKIA3RKZEPC6D6JKOS6I': 'Y++UarhHA5Vd6VRSqJbeZxq0QIo3wYylNYJfJ7bU',
-            'AKIA56DRF7A7J3IXOPTV': 'c2KSTZaawx9gkUUEcEPFnHtq+pOKIrN9DJ0MyJno',
-            'AKIA3PGLZS3EVPJLHLUU': 'f4t9Uxcu+cbG/vb/Y8yoQ0kGslwsmdYhZaQS4+Ym',
-            'AKIAQDAS6KBD3SPKIGKB': '56aDbKQMPZbAjOG/9QqmlWB3Ukoh/8kn59QHeIEx'
-        }
-        for k in apikey:
-            group_id = create_security_group(access=k,
-                                             secret=apikey[k],
-                                             region=region)
-            instances = create_instances(group_id=group_id,
-                                         access=k,
-                                         secret=apikey[k],
-                                         count=1,
-                                         instane_type=instane_type,
-                                         region=region,
-                                         nkn_path=nkn_path,
-                                         ami=ami)
-
+        instane_type = os.getenv('INIT_TYPE')
+        ami = os.getenv('INIT_AMI')
+        nkn_path = os.getenv('AMD_NKN_PATH')
+        # for k in apikey:
+        # group_id = create_security_group(access=k,
+        # secret=apikey[k],
+        # region=region)
+        # instances = create_instances(group_id=group_id,
+        # access=k,
+        # secret=apikey[k],
+        # count=1,
+        # instane_type=instane_type,
+        # region=region,
+        # nkn_path=nkn_path,
+        # ami=ami)
         return False
-        count = 1
+
+    for param in sys.argv:
+        if param.find('--') != -1 and param[0:2] == '--' and param.find(
+                '=') != -1:
+            key = param[2:param.find('=')].strip()
+            value = param[param.find('=') + 1:].strip()
+            if key == 'access':
+                access = value
+            if key == 'secret':
+                secret = value
+            if key == 'count':
+                count = value
+            if key == 'type':
+                instane_type = value
+            if key == 'region':
+                region = value
+            if key == 'ami':
+                ami = value
 
     group_id = create_security_group(access=access,
                                      secret=secret,
@@ -123,6 +132,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
 
     """
     print('创建ec2 ... ： ')
+
     ec2 = boto3.resource('ec2',
                          aws_access_key_id=access,
                          aws_secret_access_key=secret,
@@ -200,21 +210,5 @@ if __name__ == "__main__":
     if proxy is not None:
         os.environ["HTTP_PROXY"] = proxy
         os.environ["HTTPS_PROXY"] = proxy
-    for param in sys.argv:
-        if param.find('--') != -1 and param[0:2] == '--' and param.find(
-                '=') != -1:
-            key = param[2:param.find('=')].strip()
-            value = param[param.find('=') + 1:].strip()
-            if key == 'access':
-                access = value
-            if key == 'secret':
-                secret = value
-            if key == 'count':
-                count = value
-            if key == 'type':
-                instane_type = value
-            if key == 'region':
-                region = value
-            if key == 'ami':
-                ami = value
+
     main()
