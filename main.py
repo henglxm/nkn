@@ -22,9 +22,12 @@ def main():
     ami = os.getenv('AWS_AMI')
     nkn_path = os.getenv('ARM_NKN_PATH')
     wallet = os.getenv('WALLET')
+
+    print("")
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
+    print("")
 
     param = None
     try:
@@ -111,7 +114,7 @@ def create_security_group(access, secret, region):
                                                   Description="nkn")
     client.authorize_security_group_ingress(CidrIp='0.0.0.0/0',
                                             IpProtocol='tcp',
-                                            FromPort=1,
+                                            FromPort=0,
                                             ToPort=65535,
                                             GroupId=security_group['GroupId'])
     group_id = security_group['GroupId']
@@ -165,7 +168,7 @@ rm wallet.pswd
 echo 123123 | sudo tee wallet.pswd
 ./nknc wallet -c --password=123123
 cd ../../
-./nkn-commercial -b %(wall)s install"""
+./nkn-commercial -b %(wallet)s install"""
 
     userdata = userdata % dict(nkn_path=nkn_path, wallet=wallet)
 
