@@ -79,8 +79,8 @@ def main():
     i = 1
     for instance in instances:
         print(instance.id)
-    print('请等待30秒...')
-    time.sleep(30)
+    print('请等待10秒...')
+    time.sleep(10)
     for instance in instances:
         client = boto3.client('ec2',
                               aws_access_key_id=access,
