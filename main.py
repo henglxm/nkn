@@ -25,6 +25,7 @@ def main():
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
+
     param = None
     try:
         param = sys.argv[1] if sys.argv[1] else None
