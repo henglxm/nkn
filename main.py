@@ -42,6 +42,9 @@ def main():
         ami = os.getenv('INIT_AMI')
         nkn_path = os.getenv('AMD_NKN_PATH')
         count = 1
+    if param and param == 'termination':
+        termination(access=access, secret=secret, region=region)
+        return False
 
     for param in sys.argv:
         if param.find('--') != -1 and param[0:2] == '--' and param.find(
@@ -79,8 +82,8 @@ def main():
     i = 1
     for instance in instances:
         print(instance.id)
-    print('请等待10秒...')
-    time.sleep(10)
+    print('请等待15秒...')
+    time.sleep(15)
     for instance in instances:
         client = boto3.client('ec2',
                               aws_access_key_id=access,
@@ -174,6 +177,20 @@ cd ../../
 
     bytestring = userdata.encode(encoding='utf-8')
     return base64.encodebytes(bytestring)
+
+
+def termination(access, secret, region):
+    f = open("termination.txt", "r+")
+    lines = f.readlines()
+    ids = ""
+    i = 1
+    for line in lines:
+        ec2 = boto3.resource('ec2',
+                             aws_access_key_id=access,
+                             aws_secret_access_key=secret,
+                             region_name=region)
+        instance = ec2.Instance(line.rstrip('\n'))
+        print(instance.terminate())
 
 
 def get_ip(access, secret, region):
