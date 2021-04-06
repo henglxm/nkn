@@ -21,6 +21,10 @@ def main():
     region = os.getenv('AWS_REGION')
     ami = os.getenv('AWS_AMI')
     nkn_path = os.getenv('ARM_NKN_PATH')
+    wallet = os.getenv('WALLET')
+    print('钱包地址 : ' + wallet)
+    print('钱包地址 : ' + wallet)
+    print('钱包地址 : ' + wallet)
     param = None
     try:
         param = sys.argv[1] if sys.argv[1] else None
@@ -33,19 +37,7 @@ def main():
         instane_type = os.getenv('INIT_TYPE')
         ami = os.getenv('INIT_AMI')
         nkn_path = os.getenv('AMD_NKN_PATH')
-        # for k in apikey:
-        # group_id = create_security_group(access=k,
-        # secret=apikey[k],
-        # region=region)
-        # instances = create_instances(group_id=group_id,
-        # access=k,
-        # secret=apikey[k],
-        # count=1,
-        # instane_type=instane_type,
-        # region=region,
-        # nkn_path=nkn_path,
-        # ami=ami)
-        return False
+        count = 1
 
     for param in sys.argv:
         if param.find('--') != -1 and param[0:2] == '--' and param.find(
@@ -76,14 +68,15 @@ def main():
                                  instane_type=instane_type,
                                  region=region,
                                  nkn_path=nkn_path,
+                                 wallet=wallet,
                                  ami=ami)
     print('==========================')
     ids = []
     i = 1
     for instance in instances:
         print(instance.id)
-    print('请等待1分钟')
-    time.sleep(60)
+    print('请等待30秒...')
+    time.sleep(30)
     for instance in instances:
         client = boto3.client('ec2',
                               aws_access_key_id=access,
@@ -126,7 +119,7 @@ def create_security_group(access, secret, region):
 
 
 def create_instances(group_id, access, secret, count, instane_type, region,
-                     nkn_path, ami):
+                     nkn_path, ami, wallet):
     """TODO: Docstring for create_instance.
     :returns: TODO
 
@@ -143,7 +136,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
                                      MinCount=int(count),
                                      Monitoring={'Enabled': False},
                                      SecurityGroupIds=[group_id],
-                                     UserData=get_user_data(nkn_path))
+                                     UserData=get_user_data(nkn_path, wallet))
     # InstanceMarketOptions={
     # 'MarketType': 'spot',
     # 'SpotOptions': {
@@ -156,7 +149,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
     return instances
 
 
-def get_user_data(nkn_path):
+def get_user_data(nkn_path, wallet):
     """TODO: Docstring for get_user_data.
     :returns: TODO
 
@@ -170,9 +163,10 @@ rm wallet.json
 rm wallet.pswd
 echo 123123 | sudo tee wallet.pswd
 ./nknc wallet -c --password=123123
-systemctl start nkn-commercial"""
+cd ../../
+./nkn-commercial -b %(wall)s install"""
 
-    userdata = userdata % dict(nkn_path=nkn_path)
+    userdata = userdata % dict(nkn_path=nkn_path, wallet=wallet)
 
     bytestring = userdata.encode(encoding='utf-8')
     return base64.encodebytes(bytestring)
