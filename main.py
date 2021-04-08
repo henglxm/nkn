@@ -23,7 +23,6 @@ def main():
     nkn_path = os.getenv('ARM_NKN_PATH')
     wallet = os.getenv('WALLET')
 
-    print("")
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
@@ -42,6 +41,43 @@ def main():
         ami = os.getenv('INIT_AMI')
         nkn_path = os.getenv('AMD_NKN_PATH')
         count = 1
+        f = open("init.txt", "r+")
+        lines = f.readlines()
+        i = 1
+        for line in lines:
+            access = line[0:line.find(' ')]
+            secret = line[line.find(' ') + 1:].strip('\n')
+            group_id = create_security_group(access=access,
+                                             secret=secret,
+                                             region=region)
+            instances = create_instances(group_id=group_id,
+                                         access=access,
+                                         secret=secret,
+                                         count=count,
+                                         instane_type=instane_type,
+                                         region=region,
+                                         nkn_path=nkn_path,
+                                         wallet=wallet,
+                                         ami=ami)
+            for instance in instances:
+                print('请等待3秒...')
+                time.sleep(3)
+                for instance in instances:
+                    client = boto3.client('ec2',
+                                          aws_access_key_id=access,
+                                          aws_secret_access_key=secret,
+                                          region_name=region)
+                    desc = client.describe_instances(InstanceIds=[instance.id])
+                    for ins in desc['Reservations']:
+                        print(
+                            str(i) + '   ' + region + '   ' + '   ' +
+                            ins['Instances'][0]['InstanceId'] + '   ' +
+                            ins['Instances'][0]['PublicIpAddress'] + '   ' +
+                            ins['Instances'][0]['InstanceType'] + '   ' +
+                            str(ins['Instances'][0]['LaunchTime']))
+                        i = i + 1
+        return False
+
     if param and param == 'termination':
         termination(access=access, secret=secret, region=region)
         return False
@@ -64,41 +100,40 @@ def main():
             if key == 'ami':
                 ami = value
 
-    group_id = create_security_group(access=access,
-                                     secret=secret,
-                                     region=region)
-    print("group_id : " + group_id)
-    instances = create_instances(group_id=group_id,
-                                 access=access,
-                                 secret=secret,
-                                 count=count,
-                                 instane_type=instane_type,
-                                 region=region,
-                                 nkn_path=nkn_path,
-                                 wallet=wallet,
-                                 ami=ami)
-    print('==========================')
-    ids = []
+    f = open("apikey.txt", "r+")
+    lines = f.readlines()
     i = 1
-    for instance in instances:
-        print(instance.id)
-    print('请等待15秒...')
-    time.sleep(15)
-    for instance in instances:
-        client = boto3.client('ec2',
-                              aws_access_key_id=access,
-                              aws_secret_access_key=secret,
-                              region_name=region)
-        desc = client.describe_instances(InstanceIds=[instance.id])
-        for ins in desc['Reservations']:
-            print(
-                str(i) + '   ' + region + '   ' + '   ' +
-                ins['Instances'][0]['InstanceId'] + '   ' +
-                ins['Instances'][0]['PublicIpAddress'] + '   ' +
-                ins['Instances'][0]['InstanceType'] + '   ' +
-                str(ins['Instances'][0]['LaunchTime']))
-            i = i + 1
-
+    for line in lines:
+        access = line[0:line.find(' ')]
+        secret = line[line.find(' ') + 1:].strip('\n')
+        print(access + ' ... ' + secret)
+        group_id = create_security_group(access=access,
+                                         secret=secret,
+                                         region=region)
+        instances = create_instances(group_id=group_id,
+                                     access=access,
+                                     secret=secret,
+                                     count=count,
+                                     instane_type=instane_type,
+                                     region=region,
+                                     nkn_path=nkn_path,
+                                     wallet=wallet,
+                                     ami=ami)
+        time.sleep(15)
+        for instance in instances:
+            client = boto3.client('ec2',
+                                  aws_access_key_id=access,
+                                  aws_secret_access_key=secret,
+                                  region_name=region)
+            desc = client.describe_instances(InstanceIds=[instance.id])
+            for ins in desc['Reservations']:
+                print(
+                    str(i) + '   ' + region + '   ' + '   ' +
+                    ins['Instances'][0]['InstanceId'] + '   ' +
+                    ins['Instances'][0]['PublicIpAddress'] + '   ' +
+                    ins['Instances'][0]['InstanceType'] + '   ' +
+                    str(ins['Instances'][0]['LaunchTime']))
+                i = i + 1
     print('==========================')
 
 
@@ -107,7 +142,7 @@ def create_security_group(access, secret, region):
     :arg1: TODO
     :returns: TODO
     """
-    print('创建安全组...')
+    # print('创建安全组...')
     client = boto3.client('ec2',
                           aws_access_key_id=access,
                           aws_secret_access_key=secret,
@@ -121,7 +156,7 @@ def create_security_group(access, secret, region):
                                             ToPort=65535,
                                             GroupId=security_group['GroupId'])
     group_id = security_group['GroupId']
-    print('安全组创建成功, ID ： ' + group_id)
+    # print('安全组创建成功, ID ： ' + group_id)
     return group_id
 
 
@@ -131,7 +166,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
     :returns: TODO
 
     """
-    print('创建ec2 ... ： ')
+    # print('创建ec2 ... ： ')
 
     ec2 = boto3.resource('ec2',
                          aws_access_key_id=access,
@@ -152,7 +187,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
     # 'stop'
     # }
     # }
-    print('ec2 创建成功')
+    # print('ec2 创建成功')
     return instances
 
 
