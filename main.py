@@ -22,6 +22,11 @@ def main():
     ami = os.getenv('AWS_AMI')
     nkn_path = os.getenv('ARM_NKN_PATH')
     wallet = os.getenv('WALLET')
+    client = boto3.client('ec2',
+                          aws_access_key_id=access,
+                          aws_secret_access_key=secret,
+                          region_name=region)
+    subnets = client.describe_subnets()
 
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
@@ -50,15 +55,17 @@ def main():
             group_id = create_security_group(access=access,
                                              secret=secret,
                                              region=region)
-            instances = create_instances(group_id=group_id,
-                                         access=access,
-                                         secret=secret,
-                                         count=count,
-                                         instane_type=instane_type,
-                                         region=region,
-                                         nkn_path=nkn_path,
-                                         wallet=wallet,
-                                         ami=ami)
+            instances = create_instances(
+                group_id=group_id,
+                access=access,
+                secret=secret,
+                count=count,
+                instane_type=instane_type,
+                region=region,
+                nkn_path=nkn_path,
+                wallet=wallet,
+                subnet_id=subnets['Subnets'][1]['SubnetId'],
+                ami=ami)
             for instance in instances:
                 print('请等待3秒...')
                 time.sleep(3)
@@ -170,7 +177,7 @@ def create_security_group(access, secret, region):
 
 
 def create_instances(group_id, access, secret, count, instane_type, region,
-                     nkn_path, ami, wallet):
+                     nkn_path, ami, subnet_id, wallet):
     """TODO: Docstring for create_instance.
     :returns: TODO
 
@@ -187,6 +194,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
                                      MinCount=int(count),
                                      Monitoring={'Enabled': False},
                                      SecurityGroupIds=[group_id],
+                                     SubnetId=subnet_id,
                                      UserData=get_user_data(nkn_path, wallet))
     # InstanceMarketOptions={
     # 'MarketType': 'spot',
