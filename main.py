@@ -106,6 +106,10 @@ def main():
     for line in lines:
         access = line[0:line.find(' ')]
         secret = line[line.find(' ') + 1:].strip('\n')
+        client = boto3.client('ec2',
+                              aws_access_key_id=access,
+                              aws_secret_access_key=secret,
+                              region_name=region)
         print(access + ' ... ' + secret)
         group_id = create_security_group(access=access,
                                          secret=secret,
@@ -119,21 +123,26 @@ def main():
                                      nkn_path=nkn_path,
                                      wallet=wallet,
                                      ami=ami)
-        time.sleep(15)
-        for instance in instances:
-            client = boto3.client('ec2',
-                                  aws_access_key_id=access,
-                                  aws_secret_access_key=secret,
-                                  region_name=region)
-            desc = client.describe_instances(InstanceIds=[instance.id])
-            for ins in desc['Reservations']:
-                print(
-                    str(i) + '   ' + region + '   ' + '   ' +
-                    ins['Instances'][0]['InstanceId'] + '   ' +
-                    ins['Instances'][0]['PublicIpAddress'] + '   ' +
-                    ins['Instances'][0]['InstanceType'] + '   ' +
-                    str(ins['Instances'][0]['LaunchTime']))
-                i = i + 1
+        time.sleep(30)
+        print('ec2 created')
+        client = boto3.client('ec2',
+                              aws_access_key_id=access,
+                              aws_secret_access_key=secret,
+                              region_name=region)
+        desc = client.describe_instances(Filters=[
+            {
+                'Name': 'instance-type',
+                'Values': [
+                    instane_type,
+                ]
+            },
+        ])
+        for ins in desc['Reservations'][0]['Instances']:
+            print(
+                str(i) + '   ' + region + '   ' + '   ' + ins['InstanceId'] +
+                '   ' + ins['PublicIpAddress'] + '   ' + ins['InstanceType'] +
+                '   ' + str(ins['LaunchTime']))
+            i = i + 1
     print('==========================')
 
 
@@ -186,7 +195,7 @@ def create_instances(group_id, access, secret, count, instane_type, region,
     # 'InstanceInterruptionBehavior':
     # 'stop'
     # }
-    # }
+    # })
     # print('ec2 创建成功')
     return instances
 
