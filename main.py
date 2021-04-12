@@ -22,11 +22,6 @@ def main():
     ami = os.getenv('AWS_AMI')
     nkn_path = os.getenv('ARM_NKN_PATH')
     wallet = os.getenv('WALLET')
-    client = boto3.client('ec2',
-                          aws_access_key_id=access,
-                          aws_secret_access_key=secret,
-                          region_name=region)
-    subnets = client.describe_subnets()
 
     print('钱包地址 : ' + wallet)
     print('钱包地址 : ' + wallet)
@@ -55,6 +50,11 @@ def main():
             group_id = create_security_group(access=access,
                                              secret=secret,
                                              region=region)
+            client = boto3.client('ec2',
+                                  aws_access_key_id=access,
+                                  aws_secret_access_key=secret,
+                                  region_name=region)
+            subnets = client.describe_subnets()
             instances = create_instances(
                 group_id=group_id,
                 access=access,
@@ -69,20 +69,21 @@ def main():
             for instance in instances:
                 print('请等待3秒...')
                 time.sleep(3)
-                for instance in instances:
-                    client = boto3.client('ec2',
-                                          aws_access_key_id=access,
-                                          aws_secret_access_key=secret,
-                                          region_name=region)
-                    desc = client.describe_instances(InstanceIds=[instance.id])
-                    for ins in desc['Reservations']:
-                        print(
-                            str(i) + '   ' + region + '   ' + '   ' +
-                            ins['Instances'][0]['InstanceId'] + '   ' +
-                            ins['Instances'][0]['PublicIpAddress'] + '   ' +
-                            ins['Instances'][0]['InstanceType'] + '   ' +
-                            str(ins['Instances'][0]['LaunchTime']))
-                        i = i + 1
+                desc = client.describe_instances(Filters=[
+                    {
+                        'Name': 'instance-type',
+                        'Values': [
+                            instane_type,
+                        ]
+                    },
+                ])
+                for ins in desc['Reservations'][0]['Instances']:
+                    print(
+                        str(i) + '   ' + region + '   ' + '   ' +
+                        ins['InstanceId'] + '   ' + ins['PublicIpAddress'] +
+                        '   ' + ins['InstanceType'] + '   ' +
+                        str(ins['LaunchTime']))
+            i = i + 1
         return False
 
     if param and param == 'termination':
@@ -113,25 +114,28 @@ def main():
     for line in lines:
         access = line[0:line.find(' ')]
         secret = line[line.find(' ') + 1:].strip('\n')
+        print(access + ' ... ' + secret)
         client = boto3.client('ec2',
                               aws_access_key_id=access,
                               aws_secret_access_key=secret,
                               region_name=region)
-        print(access + ' ... ' + secret)
+        subnets = client.describe_subnets()
         group_id = create_security_group(access=access,
                                          secret=secret,
                                          region=region)
-        instances = create_instances(group_id=group_id,
-                                     access=access,
-                                     secret=secret,
-                                     count=count,
-                                     instane_type=instane_type,
-                                     region=region,
-                                     nkn_path=nkn_path,
-                                     wallet=wallet,
-                                     ami=ami)
-        time.sleep(30)
+        instances = create_instances(
+            group_id=group_id,
+            access=access,
+            secret=secret,
+            count=count,
+            instane_type=instane_type,
+            region=region,
+            nkn_path=nkn_path,
+            wallet=wallet,
+            subnet_id=subnets['Subnets'][1]['SubnetId'],
+            ami=ami)
         print('ec2 created')
+        time.sleep(30)
         client = boto3.client('ec2',
                               aws_access_key_id=access,
                               aws_secret_access_key=secret,
